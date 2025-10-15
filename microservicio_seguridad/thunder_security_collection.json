@@ -1,0 +1,125 @@
+{
+  "version": "1.1.0",
+  "collections": [
+    {
+      "name": "Seguridad",
+      "requests": [
+        {
+          "name": "Create User",
+          "request": {
+            "url": "{{base}}/create_user",
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"name\":\"Prueba\",\"email\":\"prueba@example.com\",\"password\":\"secret123\"}"
+            }
+          }
+        },
+        {
+          "name": "Login",
+          "request": {
+            "url": "{{base}}/login",
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\":\"prueba@example.com\",\"password\":\"secret123\"}"
+            }
+          }
+        },
+        {
+          "name": "Change Password",
+          "request": {
+            "url": "{{base}}/change_password",
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"current_password\":\"secret123\",\"new_password\":\"newsecret123\"}"
+            }
+          }
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "url": "{{base}}/logout",
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ]
+          }
+        },
+        {
+          "name": "Forgot Password (send link)",
+          "request": {
+            "url": "{{base}}/forgot_password",
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\":\"prueba@example.com\"}"
+            }
+          }
+        },
+        {
+          "name": "Reset Password (use token)",
+          "request": {
+            "url": "{{base}}/reset_password",
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\":\"prueba@example.com\",\"token\":\"<TOKEN_FROM_EMAIL>\",\"password\":\"finalpass123\",\"password_confirmation\":\"finalpass123\"}"
+            }
+          }
+        },
+        {
+          "name": "Assign Role (admin only)",
+          "request": {
+            "url": "{{base}}/users/1/roles/assign",
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"role\":\"admin\"}"
+            }
+          }
+        },
+        {
+          "name": "List User Roles",
+          "request": {
+            "url": "{{base}}/users/1/roles",
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "environments": [
+    {
+      "name": "Seguridad",
+      "values": [
+        { "key": "base", "value": "http://127.0.0.1:8000/api", "enabled": true },
+        { "key": "token", "value": "", "enabled": true }
+      ]
+    }
+  ]
+}

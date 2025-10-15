@@ -32,6 +32,10 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
     Route::post('/users/{id}/roles/assign', [App\Http\Controllers\RoleController::class, 'assign'])->middleware('role:admin');
     Route::post('/users/{id}/roles/remove', [App\Http\Controllers\RoleController::class, 'remove'])->middleware('role:admin');
     Route::get('/users/{id}/roles', [App\Http\Controllers\RoleController::class, 'listUserRoles'])->middleware('auth:sanctum');
+
+    // Users listing and details (admin only)
+    Route::get('/users', [App\Http\Controllers\UserController::class, 'index'])->middleware('role:admin');
+    Route::get('/users/{id}', [App\Http\Controllers\UserController::class, 'show'])->middleware('role:admin');
 });
 
 // Notifications

@@ -49,4 +49,18 @@ class UserController extends Controller
         $user->save();
         return response()->json(['message' => 'Contraseña cambiada correctamente']);
     }
+
+    // List users (admin only)
+    public function index()
+    {
+        $users = User::select('id', 'name', 'email', 'created_at')->orderBy('id')->get();
+        return response()->json(['users' => $users]);
+    }
+
+    // Show single user (admin only)
+    public function show($id)
+    {
+        $user = User::select('id', 'name', 'email', 'created_at')->findOrFail($id);
+        return response()->json(['user' => $user]);
+    }
 }

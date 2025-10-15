@@ -8,6 +8,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use App\Notifications\ResetPasswordNotification;
 use Laravel\Sanctum\HasApiTokens;
+use Illuminate\Support\Facades\Http;
 use App\Models\Role;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
@@ -58,6 +59,25 @@ class User extends Authenticatable
     {
         $url = config('app.url') . "/api/reset_password?token={$token}&email=" . urlencode($this->email);
 
+        // Try to send via the notifications microservice (development/test).
+        // Falls back to the default mail notification if the HTTP call fails.
+        try {
+            $notifyUrl = env('NOTIFICATIONS_URL', 'http://127.0.0.1:5001') . '/notify';
+            $payload = [
+                'title' => 'Restablecer contraseña',
+                'body' => "Recibiste este correo porque solicitaste restablecer tu contraseña.\n\nVisita: {$url}",
+                'recipients' => [$this->email]
+            ];
+
+            $resp = Http::post($notifyUrl, $payload);
+            if ($resp->successful()) {
+                return;
+            }
+        } catch (\Throwable $e) {
+            // ignore and fallback to mail
+        }
+
+        // Fallback: use the built-in mail notification
         $this->notify(new ResetPasswordNotification($url));
     }
 
