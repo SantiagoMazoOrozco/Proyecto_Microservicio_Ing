@@ -1,0 +1,53 @@
+services:
+  auditoria:
+    build: ./microservicio_auditoria
+    ports:
+      - "5001:5001"
+    networks:
+      - appnet
+
+  consulta:
+    build: ./microservicio_consulta
+    ports:
+      - "8000:8000"
+    networks:
+      - appnet
+
+  notificaciones:
+    build: ./microservicio_notificaciones
+    ports:
+      - "8002:80"
+    networks:
+      - appnet
+
+  reportes:
+    build: ./microservicio_reportes
+    ports:
+      - "5003:5003"
+    networks:
+      - appnet
+
+  seguridad:
+    build: ./microservicio_seguridad
+    ports:
+      - "8001:80"
+    networks:
+      - appnet
+
+  api_gateway:
+    build: ./microservicio_seguridad/api_gateway
+    ports:
+      - "3000:3000"
+    depends_on:
+      - auditoria
+      - consulta
+      - notificaciones
+      - reportes
+    environment:
+      - JWT_SECRET=mysecretchangeme
+    networks:
+      - appnet
+
+networks:
+  appnet:
+    driver: bridge
