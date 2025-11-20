@@ -1,0 +1,13 @@
+version: '3.8'
+services:
+  consulta:
+    build: .
+    container_name: ms_consulta
+    ports:
+      - "8001:8000" # host mapped to 8001 to avoid conflict with ms_seguridad_app
+    volumes:
+      - ./:/app
+    environment:
+      - PYTHONUNBUFFERED=1
+    command: ["sh", "-c", "python manage.py migrate --noinput || true && python manage.py runserver 0.0.0.0:8000"]
+    restart: unless-stopped

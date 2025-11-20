@@ -9,10 +9,10 @@ import requests
 
 load_dotenv()
 
-MONGO_URI = os.getenv('MONGO_URI', 'mongodb://localhost:27017')
+MONGO_URI = os.getenv('MONGO_URI', 'mongodb://mongo:27017')
 DB_NAME = os.getenv('DB_NAME', 'audit_db')
 COL_NAME = os.getenv('COL_NAME', 'logs')
-SECURITY_SERVICE_URL = os.getenv('SECURITY_SERVICE_URL', '')
+SECURITY_SERVICE_URL = os.getenv('SECURITY_SERVICE_URL', 'http://ms_seguridad:8000')
 PORT = int(os.getenv('PORT', 5003))
 
 app = Flask(__name__)
@@ -73,10 +73,12 @@ def create_log():
     if not payload:
         return jsonify({'detail': 'invalid_json'}), 422
     try:
-        item = LogItem.parse_obj(payload)
+        # pydantic v2: use model_validate for runtime validation
+        item = LogItem.model_validate(payload)
     except ValidationError as ve:
         return jsonify({'detail': ve.errors()}), 422
-    doc = item.dict()
+    # pydantic v2: use model_dump to get serializable dict
+    doc = item.model_dump()
     res = col.insert_one(doc)
     return jsonify({'id': str(res.inserted_id)}), 201
 
@@ -92,8 +94,9 @@ def bulk_logs():
     errors = []
     for i, p in enumerate(payload):
         try:
-            item = LogItem.parse_obj(p)
-            docs.append(item.dict())
+            # pydantic v2 compatibility
+            item = LogItem.model_validate(p)
+            docs.append(item.model_dump())
         except ValidationError as ve:
             errors.append({'index': i, 'errors': ve.errors()})
     if errors:

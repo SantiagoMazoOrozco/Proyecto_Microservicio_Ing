@@ -1,0 +1,144 @@
+version: '3.8'
+services:
+  redis:
+    image: redis:7-alpine
+    container_name: ms_redis
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 2s
+      retries: 5
+
+  mongo:
+    image: mongo:6
+    container_name: ms_mongo
+    volumes:
+      - mongo_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongo", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  mysql:
+    image: mysql:8.0
+    container_name: ms_mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-root}
+      MYSQL_DATABASE: ${DB_DATABASE:-microservicio_seguridad}
+      MYSQL_USER: ${DB_USERNAME:-laravel}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-secret}
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  mailhog:
+    image: mailhog/mailhog
+    container_name: ms_mailhog
+    ports:
+      - "8025:8025"
+      - "1025:1025"
+
+  ms_seguridad:
+    build:
+      context: ./microservicio_seguridad
+      dockerfile: Dockerfile
+    container_name: ms_seguridad_app
+    ports:
+      - "8000:8000"
+    env_file:
+      - ./microservicio_seguridad/.env.example
+    depends_on:
+      - mysql
+      - redis
+
+  ms_consulta:
+    build:
+      context: ./microservicio_consulta
+      dockerfile: Dockerfile
+    container_name: ms_consulta
+    ports:
+      - "8001:8000"
+    volumes:
+      - ./microservicio_consulta/:/app
+    environment:
+      - PYTHONUNBUFFERED=1
+      - DATABASE_URL=${CONSULTA_DATABASE_URL}
+    depends_on:
+      - ms_seguridad
+
+  ms_auditoria:
+    build:
+      context: ./microservicio_auditoria
+      dockerfile: Dockerfile
+    container_name: ms_auditoria
+    ports:
+      - "5003:5003"
+    environment:
+      - MONGO_URI=mongodb://mongo:27017
+      - DB_NAME=${AUDIT_DB_NAME:-audit_db}
+      - COL_NAME=${AUDIT_COL_NAME:-logs}
+      - SECURITY_SERVICE_URL=http://ms_seguridad:8000
+      - PORT=5003
+    depends_on:
+      - mongo
+
+  ms_notificaciones:
+    build:
+      context: ./microservicio_notificaciones
+      dockerfile: Dockerfile
+    container_name: ms_notificaciones
+    env_file:
+      - ./microservicio_notificaciones/.env
+    ports:
+      - "5004:5003"
+    depends_on:
+      - redis
+      - mailhog
+    volumes:
+      - notifications_data:/app/notifications
+
+  celery_reportes:
+    build:
+      context: ./microservicio_reportes
+      dockerfile: Dockerfile
+    container_name: ms_reportes_worker
+    command: celery -A tasks.celery worker --loglevel=info
+    env_file:
+      - ./microservicio_reportes/.env
+    depends_on:
+      - redis
+      - ms_reportes
+    volumes:
+      - reports_data:/app/reports
+
+  ms_reportes:
+    build:
+      context: ./microservicio_reportes
+      dockerfile: Dockerfile
+    container_name: ms_reportes
+    ports:
+      - "5002:5002"
+    env_file:
+      - ./microservicio_reportes/.env
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - SECURITY_SERVICE_URL=http://ms_seguridad:8000
+    volumes:
+      - reports_data:/app/reports
+    depends_on:
+      - redis
+
+volumes:
+  mongo_data:
+  mysql_data:
+  notifications_data:
+  reports_data:
+
+networks:
+  default:
+    name: proyecto_ms_network

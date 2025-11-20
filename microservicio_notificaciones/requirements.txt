@@ -1,0 +1,6 @@
+Flask>=2.0
+python-dotenv
+requests
+celery
+redis
+pytest==7.4.0
