@@ -1,0 +1,14 @@
+{
+  "name": "proyecto-bff",
+  "version": "0.1.0",
+  "description": "BFF para Proyecto_Microservicios: proxy y gestión de auth",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "cookie-parser": "^1.4.6",
+    "express": "^4.18.2",
+    "node-fetch": "^2.6.7"
+  }
+}
