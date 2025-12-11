@@ -19,17 +19,74 @@
           }
         },
         {
-          "name": "Login",
+          "name": "Gateway Login",
           "request": {
-            "url": "{{base}}/login",
+            "url": "{{base}}/auth/login",
             "method": "POST",
             "header": [
               { "key": "Content-Type", "value": "application/json" }
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\"email\":\"prueba@example.com\",\"password\":\"secret123\"}"
+              "raw": "{\"username\":\"admin\",\"password\":\"password\"}"
             }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Save token returned by the gateway into the environment variable 'token'",
+                  "try {",
+                  "  const data = JSON.parse(responseBody || '{}');",
+                  "  if (data && data.token) {",
+                  "    // Postman-style environment set (Thunder Client supports pm.* in scripts)",
+                  "    if (typeof pm !== 'undefined' && pm.environment) { pm.environment.set('token', data.token); }",
+                  "    // also try common alternatives for compatibility",
+                  "    if (typeof client !== 'undefined' && client.setEnvironmentVariable) { client.setEnvironmentVariable('token', data.token); }",
+                  "    if (typeof thunder !== 'undefined' && thunder.setEnv) { thunder.setEnv('token', data.token); }",
+                  "    console.log('Saved token to environment');",
+                  "  }",
+                  "} catch (e) { console.error('Error saving token:', e); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create User (via Gateway)",
+          "request": {
+            "url": "{{base}}/seguridad/api/create_user",
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"name\":\"Prueba\",\"email\":\"prueba@example.com\",\"password\":\"secret123\"}"
+            }
+          }
+        },
+        {
+          "name": "List Users (via Gateway)",
+          "request": {
+            "url": "{{base}}/seguridad/api/users",
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ]
+          }
+        },
+        {
+          "name": "Consulta Protected Example",
+          "request": {
+            "url": "{{base}}/consulta/protected/example",
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ]
           }
         },
         {
@@ -117,7 +174,7 @@
     {
       "name": "Seguridad",
       "values": [
-        { "key": "base", "value": "http://127.0.0.1:8000/api", "enabled": true },
+        { "key": "base", "value": "http://127.0.0.1:3000", "enabled": true },
         { "key": "token", "value": "", "enabled": true }
       ]
     }
